@@ -38,7 +38,7 @@ const exif = async (image) => {
     '/exiftool',
   );
 
-  const imagePath = path.join(`"${process.cwd()}"`, image);
+  const imagePath = path.join(`"${process.cwd()}"`, `"${image}"`);
 
   try {
     const { stdout, stderr } = await exec(

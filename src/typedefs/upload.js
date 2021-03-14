@@ -44,21 +44,24 @@ const typeDefs = gql`
 const resolvers = {
   Object: GraphQLObject,
   Mutation: {
-    uploadFile: async (_, { files }) => {
-      files.forEach(async (file) => {
+    uploadFile: async (_, { files }, { dataSources: { images } }) => {
+      const imagesWithExif = files.map(async (file) => {
         try {
           const { filename, createReadStream } = await file;
           const stream = createReadStream();
           const pathObj = await storeFile({ filename, stream });
           const exifData = await exif(pathObj.sourceFile);
-          console.log({ ...exifData, ...pathObj });
+          return { ...exifData, ...pathObj };
         } catch (e) {
           console.log(e);
         }
       });
 
+      console.log(await Promise.all(imagesWithExif));
+      await images.save(await Promise.all(imagesWithExif));
+
       return {
-        status: 'success',
+        filename: 'success',
       };
     },
   },

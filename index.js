@@ -1,14 +1,21 @@
 require('dotenv').config();
 
 const { ApolloServer } = require('apollo-server');
+const { MongoClient } = require('mongodb');
 
-const ExifAPI = require('./src/datasourses/exif');
+const Images = require('./src/datasourses/images');
 const { schema } = require('./src/schema');
+
+const client = new MongoClient(process.env.dbUri, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+});
+client.connect();
 
 const apolloServer = new ApolloServer({
   schema,
   dataSources: () => ({
-    exifAPI: new ExifAPI(),
+    images: new Images(client.db().collection('images')),
   }),
   context: async () => {
     // const {} = process.env;
