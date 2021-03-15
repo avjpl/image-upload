@@ -3,12 +3,12 @@ const { merge } = require('lodash');
 
 const schemaDirectives = require('./directives');
 const typeDefs = require('./typedefs/typeDefs');
-const { exifDefs, exifResolvers } = require('./typedefs/exif');
+const { imageDefs, imageResolvers } = require('./typedefs/image');
 const { uploadDefs, uploadResolvers } = require('./typedefs/upload');
 
 const schema = makeExecutableSchema({
-  typeDefs: [typeDefs, exifDefs, uploadDefs],
-  resolvers: [merge(exifResolvers, uploadResolvers)],
+  typeDefs: [typeDefs, imageDefs, uploadDefs],
+  resolvers: [merge(imageResolvers, uploadResolvers)],
   schemaDirectives,
 });
 

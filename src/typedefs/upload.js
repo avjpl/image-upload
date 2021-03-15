@@ -53,11 +53,10 @@ const resolvers = {
           const exifData = await exif(pathObj.sourceFile);
           return { ...exifData, ...pathObj };
         } catch (e) {
-          console.log(e);
+          console.error(e);
         }
       });
 
-      console.log(await Promise.all(imagesWithExif));
       await images.save(await Promise.all(imagesWithExif));
 
       return {

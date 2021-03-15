@@ -1,12 +1,26 @@
 const { MongoDataSource } = require('apollo-datasource-mongodb');
 
 class Images extends MongoDataSource {
-  getAllImages() {
-    return this.find();
+  async getImages() {
+    try {
+      const cursor = this.collection.find();
+
+      if ((await cursor.count()) === 0) {
+        return [];
+      }
+
+      return cursor.toArray();
+    } catch (e) {
+      console.error(e);
+    }
   }
 
-  async save(imags) {
-    return await this.collection.insertMany(imags);
+  async save(images) {
+    try {
+      return await this.collection.insertMany(images);
+    } catch (e) {
+      console.error(e);
+    }
   }
 }
 
