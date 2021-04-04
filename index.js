@@ -47,6 +47,6 @@ apolloServer
     port: 4001,
     path: '/api/graphql',
   })
-  .then(({ url, ...path }) => {
+  .then(({ url }) => {
     console.info(`Server running at ${url}api/graphql`);
   });

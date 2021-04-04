@@ -1,6 +1,8 @@
 const { createWriteStream, unlinkSync } = require('fs');
-const path = require('path');
 const { gql } = require('apollo-server');
+const FormData = require('form-data');
+const axios = require('axios');
+const path = require('path');
 
 const { GraphQLObject } = require('../types');
 const exif = require('../utils/exif');
@@ -25,6 +27,13 @@ const storeFile = ({ filename, stream }) => {
   );
 };
 
+const delay = (ms) =>
+  new Promise((resolve) => {
+    setTimeout(() => {
+      resolve();
+    }, ms);
+  });
+
 const typeDefs = gql`
   type File {
     filename: String!
@@ -45,13 +54,40 @@ const resolvers = {
   Object: GraphQLObject,
   Mutation: {
     uploadFile: async (_, { files }, { dataSources: { images } }) => {
-      const imagesWithExif = files.map(async (file) => {
+      const imagesWithExif = (await Promise.all(files)).map(async (file) => {
         try {
-          const { filename, createReadStream } = await file;
+          const { filename, createReadStream } = file;
           const stream = createReadStream();
           const pathObj = await storeFile({ filename, stream });
           const exifData = await exif(pathObj.sourceFile);
-          return { ...exifData, ...pathObj };
+
+          return { ...exifData, ...pathObj, dateAdded: Date.now() };
+        } catch (e) {
+          console.error(e);
+        }
+      });
+
+      (await Promise.all(files)).forEach(async (file) => {
+        const form = new FormData();
+        const { filename, mimetype, encoding, createReadStream } = file;
+        const stream = createReadStream();
+
+        await delay(100);
+
+        form.append('filename', filename);
+        form.append('mimetype', mimetype);
+        form.append('encoding', encoding);
+        form.append('image', stream);
+        const formHeaders = form.getHeaders();
+
+        try {
+          await axios.post(process.env.imageEndpoint, form, {
+            headers: {
+              ...formHeaders,
+            },
+          });
+
+          // TODO: Remove file from tmp folder
         } catch (e) {
           console.error(e);
         }
