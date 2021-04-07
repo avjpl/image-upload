@@ -1,4 +1,5 @@
 const { createWriteStream, unlinkSync } = require('fs');
+const { unlink } = require('fs').promises;
 const { gql } = require('apollo-server');
 const FormData = require('form-data');
 const axios = require('axios');
@@ -7,8 +8,9 @@ const path = require('path');
 const { GraphQLObject } = require('../types');
 const exif = require('../utils/exif');
 
+const uploadDir = process.env.uploadFolder;
+
 const storeFile = ({ filename, stream }) => {
-  const uploadDir = process.env.uploadFolder;
   const filePath = path.resolve(uploadDir, filename);
 
   return new Promise((resolve, reject) =>
@@ -19,11 +21,11 @@ const storeFile = ({ filename, stream }) => {
       })
       .pipe(createWriteStream(filePath))
       .on('error', (error) => reject(error))
-      .on('finish', () =>
+      .on('finish', () => {
         resolve({
           sourceFile: `${uploadDir}/${filename}`,
-        }),
-      ),
+        });
+      }),
   );
 };
 
@@ -60,6 +62,7 @@ const resolvers = {
           const stream = createReadStream();
           const pathObj = await storeFile({ filename, stream });
           const exifData = await exif(pathObj.sourceFile);
+          await unlink(`${uploadDir}/${filename}`);
 
           return { ...exifData, ...pathObj, dateAdded: Date.now() };
         } catch (e) {
@@ -86,8 +89,6 @@ const resolvers = {
               ...formHeaders,
             },
           });
-
-          // TODO: Remove file from tmp folder
         } catch (e) {
           console.error(e);
         }
